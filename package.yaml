@@ -1,26 +1,21 @@
-name:                s3-lru-cache
+name:                lru-cache
 version:             0.1.0.0
-github:              "packetloop/s3-lru-cache"
+github:              "packetloop/lru-cache"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+author:              "John Ky"
+maintainer:          "jky@arbor.net"
+copyright:           "2018 John Ky"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
 
-description:         Please see the README on GitHub at <https://github.com/packetloop/s3-lru-cache#readme>
+description:         Please see the README on GitHub at <https://github.com/packetloop/lru-cache#readme>
 
 dependencies:
 - base >= 4.7 && < 5
-- amazonka
-- amazonka-core
-- amazonka-s3
-- bytestring
-- conduit-extra
+- containers
 - lens
-- resourcet
 - stm
 
 ghc-options:
@@ -34,7 +29,7 @@ library:
   source-dirs: src
 
 tests:
-  s3-lru-cache-test:
+  lru-cache-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -42,4 +37,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - s3-lru-cache
+    - lru-cache
