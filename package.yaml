@@ -15,6 +15,7 @@ description:         Please see the README on GitHub at <https://github.com/pack
 dependencies:
 - base >= 4.7 && < 5
 - containers
+- hw-fingertree-strict
 - lens
 - stm
 

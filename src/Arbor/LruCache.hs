@@ -16,9 +16,10 @@ import Control.Lens
 import Control.Monad
 import Prelude             hiding (lookup)
 
-import qualified Arbor.LruCache.Internal.Lens as L
-import qualified Control.Concurrent.STM       as STM
-import qualified Data.Map                     as M
+import qualified Arbor.LruCache.Internal.Lens           as L
+import qualified Control.Concurrent.STM                 as STM
+import qualified Data.Map                               as M
+import qualified HaskellWorks.Data.PriorityQueue.Strict as PQ
 
 lookup :: forall k v. Ord k
   => k
@@ -31,7 +32,7 @@ lookup k cache = do
   let retrieve          = cache ^. L.retrieve
   let tEntries          = cache ^. L.entries
 
-  getResult <- STM.atomically $ do
+  join $ STM.atomically $ do
     es <- STM.readTVar tEntries
     case M.lookup k es of
       Just tmv -> return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
@@ -51,8 +52,6 @@ lookup k cache = do
                 STM.modifyTVar tRequestsInFlight (\i -> i - 1)
 
               return v
-
-  getResult
 
 entries :: forall k v. Ord k
   => Cache k v
@@ -76,11 +75,15 @@ makeCache :: CacheConfig -> (k -> IO v) -> (k -> v -> IO ()) -> IO (Cache k v)
 makeCache config retrieve evict = do
   tRequestsInFlight <- STM.newTVarIO 0
   tEntries          <- STM.newTVarIO M.empty
+  tOccupancy        <- STM.newTVarIO 0
+  tEvictionQueue    <- STM.newTVarIO PQ.empty
 
   return Cache
     { _cacheConfig            = config
     , _cacheRequestsInFlight  = tRequestsInFlight
     , _cacheEntries           = tEntries
+    , _cacheEvictionQueue     = tEvictionQueue
+    , _cacheOccupancy         = tOccupancy
     , _cacheRetrieve          = retrieve
     , _cacheEvict             = evict
     }
