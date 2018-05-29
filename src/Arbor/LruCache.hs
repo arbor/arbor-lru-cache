@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
 
 module Arbor.LruCache
     ( lookup
@@ -14,6 +15,7 @@ import Arbor.LruCache.Type
 import Control.Concurrent
 import Control.Lens
 import Control.Monad
+import Data.Maybe
 import Prelude             hiding (lookup)
 
 import qualified Arbor.LruCache.Internal.Lens           as L
@@ -28,9 +30,11 @@ lookup :: forall k v. Ord k
 lookup k cache = do
   newTmv <- STM.newTVarIO Nothing
   let maxInFlight       = cache ^. L.config . L.maxRequestsInFlight
+  let evict             = cache ^. L.evict
   let tRequestsInFlight = cache ^. L.requestsInFlight
   let retrieve          = cache ^. L.retrieve
   let tEntries          = cache ^. L.entries
+  let tOccupancy        = cache ^. L.occupancy
 
   join $ STM.atomically $ do
     es <- STM.readTVar tEntries
@@ -47,11 +51,61 @@ lookup k cache = do
             return $ do
               v <- retrieve k
 
-              STM.atomically $ do
+              kvsForEviction <- STM.atomically $ do
                 STM.writeTVar newTmv (Just v)
-                STM.modifyTVar tRequestsInFlight (\i -> i - 1)
+                STM.modifyTVar tRequestsInFlight pred
+                STM.modifyTVar tOccupancy succ
+
+                registerForEviction k cache
+                takeEvictionsDue cache
+
+
+              forM_ kvsForEviction $ uncurry evict
 
               return v
+
+registerForEviction :: k -> Cache k v -> STM.STM ()
+registerForEviction k cache = do
+  let tEvictionQueue    = cache ^. L.evictionQueue
+  let tEvictionPriority = cache ^. L.evictionPriority
+
+  STM.modifyTVar tEvictionPriority (+1)
+  evictionPriority <- STM.readTVar tEvictionPriority
+  STM.modifyTVar tEvictionQueue (PQ.insert evictionPriority k)
+
+takeEvictionsDue :: Ord k => Cache k v -> STM.STM [(k, v)]
+takeEvictionsDue cache = do
+  let maxOccupancy      = cache ^. L.config . L.maxOccupancy
+  let tEntries          = cache ^. L.entries
+  let tOccupancy        = cache ^. L.occupancy
+  let tEvictionQueue    = cache ^. L.evictionQueue
+
+  evictionQueue <- STM.readTVar tEvictionQueue
+  occupancy <- STM.readTVar tOccupancy
+
+  if occupancy > maxOccupancy
+    then case PQ.take (occupancy - maxOccupancy) evictionQueue of
+      (ks, evictionQueue') -> do
+        STM.writeTVar tEvictionQueue evictionQueue'
+        STM.writeTVar tOccupancy maxOccupancy
+
+        removeEvictionsFromEntries ks tEntries
+
+    else return []
+
+removeEvictionsFromEntries :: Ord k => [k] -> STM.TVar (M.Map k (STM.TVar (Maybe v))) -> STM.STM [(k, v)]
+removeEvictionsFromEntries ks tEntries = do
+  es <- STM.readTVar tEntries
+
+  let kmtmvs = (\k -> (k, M.lookup k es)) <$> ks
+
+  mkvs <- forM kmtmvs $ \(k, mtmv) -> case mtmv of
+    Just tmv -> do
+      mv <- STM.readTVar tmv
+      return ((k, ) <$> mv)
+    Nothing -> return Nothing
+
+  return $ catMaybes mkvs
 
 entries :: forall k v. Ord k
   => Cache k v
@@ -67,22 +121,20 @@ entries cache = do
 
     return (M.fromList kvs)
 
-
-
-
-
 makeCache :: CacheConfig -> (k -> IO v) -> (k -> v -> IO ()) -> IO (Cache k v)
 makeCache config retrieve evict = do
   tRequestsInFlight <- STM.newTVarIO 0
   tEntries          <- STM.newTVarIO M.empty
   tOccupancy        <- STM.newTVarIO 0
   tEvictionQueue    <- STM.newTVarIO PQ.empty
+  tEvictionPriority <- STM.newTVarIO 0
 
   return Cache
     { _cacheConfig            = config
     , _cacheRequestsInFlight  = tRequestsInFlight
     , _cacheEntries           = tEntries
     , _cacheEvictionQueue     = tEvictionQueue
+    , _cacheEvictionPriority  = tEvictionPriority
     , _cacheOccupancy         = tOccupancy
     , _cacheRetrieve          = retrieve
     , _cacheEvict             = evict

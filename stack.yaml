@@ -4,4 +4,4 @@ packages:
 - .
 
 extra-deps:
-- hw-fingertree-strict-0.1.0.3
+- hw-fingertree-strict-0.1.1.0
