@@ -13,6 +13,7 @@ module Arbor.LruCache
 
 import Arbor.LruCache.Type
 import Control.Concurrent
+import Control.Exception
 import Control.Lens
 import Control.Monad
 import Data.Maybe
@@ -49,7 +50,12 @@ lookup k cache = do
             STM.writeTVar tRequestsInFlight (requestsInFlight + 1)
             STM.writeTVar tEntries (M.insert k newTmv es)
             return $ do
-              v <- retrieve k
+              v <- catch (retrieve k) $ \(e :: SomeException) -> do
+                STM.atomically $ do
+                  entries2 <- STM.readTVar tEntries
+                  forM_ (M.lookup k entries2) $ \tv -> STM.writeTVar tv (throw e)
+                  STM.writeTVar tEntries (M.delete k entries2)
+                throw e
 
               kvsForEviction <- STM.atomically $ do
                 STM.writeTVar newTmv (Just v)
