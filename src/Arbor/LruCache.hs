@@ -40,7 +40,9 @@ lookup k cache = do
   join $ STM.atomically $ do
     es <- STM.readTVar tEntries
     case M.lookup k es of
-      Just tmv -> return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
+      Just tmv -> do
+        registerForEviction k cache
+        return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
 
       Nothing -> do
         requestsInFlight <- STM.readTVar tRequestsInFlight
@@ -66,7 +68,6 @@ lookup k cache = do
                 registerForEviction k cache
                 takeEvictionsDue cache
 
-
               forM_ kvsForEviction $ uncurry evict
 
               return v
@@ -79,7 +80,6 @@ registerForEviction k cache = do
   STM.modifyTVar tEvictionPriority (+1)
   evictionPriority <- STM.readTVar tEvictionPriority
   STM.modifyTVar tEvictionQueue (PQ.insert evictionPriority k)
-  -- TODO lookup should refresh the eviction priority.
 
 takeEvictionsDue :: Ord k => Cache k v -> STM.STM [(k, v)]
 takeEvictionsDue cache = do
