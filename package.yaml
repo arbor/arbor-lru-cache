@@ -38,4 +38,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - hedgehog
+    - hspec
+    - hw-hspec-hedgehog
     - lru-cache
