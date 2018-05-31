@@ -19,15 +19,12 @@ import Control.Monad
 import Data.Maybe
 import Prelude             hiding (lookup)
 
-import qualified Arbor.LruCache.Internal.Lens           as L
-import qualified Control.Concurrent.STM                 as STM
-import qualified Data.Map                               as M
-import qualified HaskellWorks.Data.PriorityQueue.Strict as PQ
+import qualified Arbor.LruCache.Internal.Lens          as L
+import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
+import qualified Control.Concurrent.STM                as STM
+import qualified Data.Map                              as M
 
-lookup :: forall k v. Ord k
-  => k
-  -> Cache k v
-  -> IO v
+lookup :: Ord k => k -> Cache k v -> IO v
 lookup k cache = do
   newTmv <- STM.newTVarIO Nothing
   let maxInFlight       = cache ^. L.config . L.maxRequestsInFlight
@@ -42,7 +39,9 @@ lookup k cache = do
     case M.lookup k es of
       Just tmv -> do
         registerForEviction k cache
-        return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
+        return $ STM.atomically $ do
+          registerForEviction k cache
+          STM.readTVar tmv >>= maybe STM.retry return
 
       Nothing -> do
         requestsInFlight <- STM.readTVar tRequestsInFlight
@@ -72,7 +71,7 @@ lookup k cache = do
 
               return v
 
-registerForEviction :: k -> Cache k v -> STM.STM ()
+registerForEviction :: Eq k => k -> Cache k v -> STM.STM ()
 registerForEviction k cache = do
   let tEvictionQueue    = cache ^. L.evictionQueue
   let tEvictionPriority = cache ^. L.evictionPriority
@@ -119,9 +118,7 @@ removeEvictionsFromEntries ks tEntries = do
 
   return kvs
 
-entries :: forall k v. Ord k
-  => Cache k v
-  -> IO (M.Map k (Maybe v))
+entries :: Ord k => Cache k v -> IO (M.Map k (Maybe v))
 entries cache = do
   let tEntries          = cache ^. L.entries
 
