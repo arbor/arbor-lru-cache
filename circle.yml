@@ -27,7 +27,6 @@ jobs:
             - dot-stack-{{ checksum "stack.yaml"         }}-{{ checksum "package.yaml" }}-gz8vvsw
             - dot-stack-{{ checksum "resolver.conf"      }}-build-gz8vvsw
             - dot-stack-{{ checksum "ghc-version.conf"   }}-build-gz8vvsw
-            - dot-stack-{{ checksum "resolver.conf"      }}-setup-gz8vvsw
             - dot-stack-{{ checksum "ghc-version.conf"   }}-setup-gz8vvsw
 
       - restore_cache:
@@ -39,9 +38,6 @@ jobs:
           name: Stack setup
           command: stack setup
 
-      - save_cache:
-          key:    dot-stack-{{ checksum "resolver.conf"      }}-setup-gz8vvsw
-          paths:  ~/.stack
       - save_cache:
           key:    dot-stack-{{ checksum "ghc-version.conf"   }}-setup-gz8vvsw
           paths:  ~/.stack
