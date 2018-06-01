@@ -16,3 +16,6 @@ take n (PriorityQueue qas) = case splitAt n (sortOn fst qas) of
 
 empty :: PriorityQueue p v
 empty = PriorityQueue []
+
+toList :: Ord p => PriorityQueue p v -> [(p, v)]
+toList (PriorityQueue qas) = sortOn fst qas
