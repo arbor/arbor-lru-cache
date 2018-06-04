@@ -3,12 +3,11 @@ jobs:
   build:
     working_directory: ~/project
     docker:
-      - image: quay.io/haskell_works/stack-build-cabal:latest
+      - image: quay.io/haskell_works/stack-build-minimal:2018-01-29
 
     steps:
       - checkout
 
-      ##### Copying scripts
       - run:
           name: Copying scripts
           command: |
@@ -18,49 +17,41 @@ jobs:
       - run:
           name: Query resolver & ghc version
           command: |
-            resolver > resolver.conf
-            ghc-version $(cat resolver.conf) >  ghc-version.conf
-
-      ##### Building library
-      - restore_cache:
-          keys:
-            - dot-stack-{{ checksum "stack.yaml"         }}-{{ checksum "package.yaml" }}-gz8vvsw
-            - dot-stack-{{ checksum "resolver.conf"      }}-build-gz8vvsw
-            - dot-stack-{{ checksum "ghc-version.conf"   }}-build-gz8vvsw
-            - dot-stack-{{ checksum "ghc-version.conf"   }}-setup-gz8vvsw
+            resolver > resolver.version
+            ghc-version $(cat resolver.version) >  ghc.version
 
       - restore_cache:
           keys:
-            - dot-stack-work-{{ checksum "resolver.conf"      }}-gz8vvsw
-            - dot-stack-work-{{ checksum "ghc-version.conf"   }}-gz8vvsw
+                - stack--{{ checksum "ghc.version" }}--{{ .Environment.CACHE_VERSION }}--{{ checksum "resolver.version" }}--{{ checksum "package.yaml" }}--{{ checksum "stack.yaml" }}
+                - stack--{{ checksum "ghc.version" }}--{{ .Environment.CACHE_VERSION }}--{{ checksum "resolver.version" }}--{{ checksum "package.yaml" }}
+                - stack--{{ checksum "ghc.version" }}--{{ .Environment.CACHE_VERSION }}--{{ checksum "resolver.version" }}
+                - stack--{{ checksum "ghc.version" }}--only
 
       - run:
           name: Stack setup
           command: stack setup
 
       - save_cache:
-          key:    dot-stack-{{ checksum "ghc-version.conf"   }}-setup-gz8vvsw
-          paths:  ~/.stack
+          key:    stack--{{ checksum "ghc.version" }}--only
+          paths:  [~/.stack, ~/project/.stack-work]
+
+      - run:
+          name: Building dependencies
+          command: stack build --only-dependencies
+
+      - save_cache:
+          key:    stack--{{ checksum "ghc.version" }}--{{ .Environment.CACHE_VERSION }}--{{ checksum "resolver.version" }}--{{ checksum "package.yaml" }}
+          paths:  [~/.stack, ~/project/.stack-work]
 
       - run:
           name: Compiling
           command: stack build --test --no-run-tests
 
       - save_cache:
-          key:    dot-stack-{{ checksum "stack.yaml"         }}-{{ checksum "package.yaml" }}-gz8vvsw
-          paths:  ~/.stack
-      - save_cache:
-          key:    dot-stack-{{ checksum "resolver.conf"      }}-build-gz8vvsw
-          paths:  ~/.stack
-      - save_cache:
-          key:    dot-stack-{{ checksum "ghc-version.conf"   }}-build-gz8vvsw
-          paths:  ~/.stack
-      - save_cache:
-          key:    dot-stack-work-{{ checksum "resolver.conf" }}-gz8vvsw
-          paths:  ~/project/.stack-work
+          key:    stack--{{ checksum "ghc.version" }}--{{ .Environment.CACHE_VERSION }}--{{ checksum "resolver.version" }}--{{ checksum "package.yaml" }}--{{ checksum "stack.yaml" }}
+          paths:  [~/.stack, ~/project/.stack-work]
 
       ##### Running tests
       - run:
-          name: Running tests
-          command: |
-            stack test
+          name: Running tests against latest on hackage
+          command: stack test
