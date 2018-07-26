@@ -1,3 +1,3 @@
-# Changelog for s3-lru-cache
+# Changelog for arbor-lru-cache
 
 ## Unreleased changes

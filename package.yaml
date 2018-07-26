@@ -1,16 +1,16 @@
-name:                lru-cache
+name:                arbor-lru-cache
 version:             0.1.1.0
-github:              "packetloop/lru-cache"
+github:              "packetloop/arbor-lru-cache"
 license:             BSD3
-author:              "John Ky"
-maintainer:          "jky@arbor.net"
-copyright:           "2018 John Ky"
+author:              "Arbor Networks"
+maintainer:          "mayhem@arbor.net"
+copyright:           "2018 Arbor Networks"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
 
-description:         Please see the README on GitHub at <https://github.com/packetloop/lru-cache#readme>
+description:         Please see the README on GitHub at <https://github.com/packetloop/arbor-lru-cache#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -29,7 +29,7 @@ library:
   source-dirs: src
 
 tests:
-  lru-cache-test:
+  arbor-lru-cache-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -40,4 +40,4 @@ tests:
     - hedgehog
     - hspec
     - hw-hspec-hedgehog
-    - lru-cache
+    - arbor-lru-cache
