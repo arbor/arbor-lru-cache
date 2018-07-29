@@ -1,38 +1,40 @@
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module Arbor.LruCache
     ( lookup
     , makeCache
-    , CacheConfig(..)
-    , Cache(..)
+    , Z.CacheConfig(..)
+    , Z.Cache(..)
     , retrieveData
     , evictData
     , entries
     ) where
 
-import Arbor.LruCache.Type
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
 import Control.Monad
+import Data.Generics.Product.Any
 import Data.Maybe
-import Prelude             hiding (lookup)
+import Prelude                   hiding (lookup)
 
-import qualified Arbor.LruCache.Internal.Lens          as L
 import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
+import qualified Arbor.LruCache.Type                   as Z
 import qualified Control.Concurrent.STM                as STM
 import qualified Data.Map                              as M
 
-lookup :: Ord k => k -> Cache k v -> IO v
+lookup :: Ord k => k -> Z.Cache k v -> IO v
 lookup k cache = do
   newTmv <- STM.newTVarIO Nothing
-  let maxInFlight       = cache ^. L.config . L.maxRequestsInFlight
-  let evict             = cache ^. L.evict
-  let tRequestsInFlight = cache ^. L.requestsInFlight
-  let retrieve          = cache ^. L.retrieve
-  let tEntries          = cache ^. L.entries
-  let tOccupancy        = cache ^. L.occupancy
+  let maxInFlight       = cache ^. the @"config" . the @"maxRequestsInFlight"
+  let evict             = cache ^. the @"evict"
+  let tRequestsInFlight = cache ^. the @"requestsInFlight"
+  let retrieve          = cache ^. the @"retrieve"
+  let tEntries          = cache ^. the @"entries"
+  let tOccupancy        = cache ^. the @"occupancy"
 
   join $ STM.atomically $ do
     es <- STM.readTVar tEntries
@@ -71,21 +73,21 @@ lookup k cache = do
 
               return v
 
-registerForEviction :: Eq k => k -> Cache k v -> STM.STM ()
+registerForEviction :: Eq k => k -> Z.Cache k v -> STM.STM ()
 registerForEviction k cache = do
-  let tEvictionQueue    = cache ^. L.evictionQueue
-  let tEvictionPriority = cache ^. L.evictionPriority
+  let tEvictionQueue    = cache ^. the @"evictionQueue"
+  let tEvictionPriority = cache ^. the @"evictionPriority"
 
   STM.modifyTVar tEvictionPriority (+1)
   evictionPriority <- STM.readTVar tEvictionPriority
   STM.modifyTVar tEvictionQueue (PQ.insert evictionPriority k)
 
-takeEvictionsDue :: Ord k => Cache k v -> STM.STM [(k, v)]
+takeEvictionsDue :: Ord k => Z.Cache k v -> STM.STM [(k, v)]
 takeEvictionsDue cache = do
-  let maxOccupancy      = cache ^. L.config . L.maxOccupancy
-  let tEntries          = cache ^. L.entries
-  let tOccupancy        = cache ^. L.occupancy
-  let tEvictionQueue    = cache ^. L.evictionQueue
+  let maxOccupancy      = cache ^. the @"config" . the @"maxOccupancy"
+  let tEntries          = cache ^. the @"entries"
+  let tOccupancy        = cache ^. the @"occupancy"
+  let tEvictionQueue    = cache ^. the @"evictionQueue"
 
   evictionQueue <- STM.readTVar tEvictionQueue
   occupancy <- STM.readTVar tOccupancy
@@ -118,9 +120,9 @@ removeEvictionsFromEntries ks tEntries = do
 
   return kvs
 
-entries :: Ord k => Cache k v -> IO (M.Map k (Maybe v))
+entries :: Ord k => Z.Cache k v -> IO (M.Map k (Maybe v))
 entries cache = do
-  let tEntries          = cache ^. L.entries
+  let tEntries          = cache ^. the @"entries"
 
   STM.atomically $ do
     m <- STM.readTVar tEntries
@@ -130,7 +132,7 @@ entries cache = do
 
     return (M.fromList kvs)
 
-makeCache :: CacheConfig -> (k -> IO v) -> (k -> v -> IO ()) -> IO (Cache k v)
+makeCache :: Z.CacheConfig -> (k -> IO v) -> (k -> v -> IO ()) -> IO (Z.Cache k v)
 makeCache config retrieve evict = do
   tRequestsInFlight <- STM.newTVarIO 0
   tEntries          <- STM.newTVarIO M.empty
@@ -138,15 +140,15 @@ makeCache config retrieve evict = do
   tEvictionQueue    <- STM.newTVarIO PQ.empty
   tEvictionPriority <- STM.newTVarIO 0
 
-  return Cache
-    { _cacheConfig            = config
-    , _cacheRequestsInFlight  = tRequestsInFlight
-    , _cacheEntries           = tEntries
-    , _cacheEvictionQueue     = tEvictionQueue
-    , _cacheEvictionPriority  = tEvictionPriority
-    , _cacheOccupancy         = tOccupancy
-    , _cacheRetrieve          = retrieve
-    , _cacheEvict             = evict
+  return Z.Cache
+    { Z.config            = config
+    , Z.requestsInFlight  = tRequestsInFlight
+    , Z.entries           = tEntries
+    , Z.evictionQueue     = tEvictionQueue
+    , Z.evictionPriority  = tEvictionPriority
+    , Z.occupancy         = tOccupancy
+    , Z.retrieve          = retrieve
+    , Z.evict             = evict
     }
 
 retrieveData :: (String, Int) -> IO String
