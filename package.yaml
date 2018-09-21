@@ -1,7 +1,7 @@
 name:                arbor-lru-cache
 version:             0.1.1.0
 github:              "packetloop/arbor-lru-cache"
-license:             BSD3
+license:             MIT
 author:              "Arbor Networks"
 maintainer:          "mayhem@arbor.net"
 copyright:           "2018 Arbor Networks"
