@@ -1,6 +1,6 @@
 name:                arbor-lru-cache
 version:             0.1.1.0
-github:              "packetloop/arbor-lru-cache"
+github:              "arbor/arbor-lru-cache"
 license:             MIT
 author:              "Arbor Networks"
 maintainer:          "mayhem@arbor.net"
@@ -10,7 +10,7 @@ extra-source-files:
 - README.md
 - ChangeLog.md
 
-description:         Please see the README on GitHub at <https://github.com/packetloop/arbor-lru-cache#readme>
+description:         Please see the README on GitHub at <https://github.com/arbor/arbor-lru-cache#readme>
 
 dependencies:
 - base >= 4.7 && < 5
