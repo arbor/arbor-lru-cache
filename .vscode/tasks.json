@@ -65,7 +65,7 @@
         "fileLocation": [ "relative", "${workspaceRoot}" ],
         "pattern": [
           {
-            "regexp": "^\\s+(.+):(\\d+):.*$",
+            "regexp": "^.+?([^ ]+):(\\d+):.*$",
             "file": 1, "line": 2
           },
           {
