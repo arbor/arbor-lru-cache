@@ -20,6 +20,7 @@ docker/rdkafka/
 
 ### Haskell ###
 dist
+dist-newstyle
 cabal-dev
 *.o
 *.hi
@@ -35,7 +36,7 @@ cabal.config
 *.ps
 *.hp
 *.prof
-*.cabal
+.ghc.environment.*
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
