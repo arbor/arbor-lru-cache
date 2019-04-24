@@ -46,6 +46,7 @@ library
 test-suite arbor-lru-cache-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
+  build-tools: hspec-discover
   other-modules:
       Arbor.LruCache.Internal.PriorityQueueSpec
       Arbor.LruCache.LruCacheSpec
