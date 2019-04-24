@@ -1,11 +1,5 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
---
--- see: https://github.com/sol/hpack
---
--- hash: 6f788a936e2275be13e2fccec8714e1aef6d677947f08af60f43b738a1d98b00
-
 name:           arbor-lru-cache
 version:        0.1.1.0
 description:    Please see the README on GitHub at <https://github.com/arbor/arbor-lru-cache#readme>
@@ -14,6 +8,8 @@ bug-reports:    https://github.com/arbor/arbor-lru-cache/issues
 author:         Arbor Networks
 maintainer:     mayhem@arbor.net
 copyright:      2018 Arbor Networks
+category:       Data, Concurrency
+synopsis:       LRU cache based on STM
 license:        MIT
 license-file:   LICENSE
 build-type:     Simple
@@ -46,6 +42,7 @@ library
 test-suite arbor-lru-cache-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
+  build-tools: hspec-discover
   other-modules:
       Arbor.LruCache.Internal.PriorityQueueSpec
       Arbor.LruCache.LruCacheSpec

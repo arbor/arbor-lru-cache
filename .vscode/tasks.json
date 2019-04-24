@@ -1,8 +1,10 @@
 {
-  "version": "0.1.0",
-  "isShellCommand": true,
-  "showOutput": "always",
-  "suppressTaskName": true,
+  "version": "2.0.0",
+  "type": "shell",
+  "presentation": {
+    "reveal": "always",
+    "panel": "new"
+  },
   "windows": {
     "command": "cmd", "args": ["/c"]
   },
@@ -14,10 +16,12 @@
   },
   "tasks": [
     {
-      "taskName": "stack build",
-      "isBuildCommand": true,
+      "label": "stack build",
+      "group": "build",
+      "command": "/bin/bash",
       "args": [
-        "echo START_STACK_BUILD && cd ${workspaceRoot} && stack build && echo END_STACK_BUILD "
+        "-c",
+        "echo START_BUILD && cd ${workspaceRoot} && ./project.sh build && echo END_BUILD "
       ],
       "problemMatcher": {
         "owner": "haskell",
@@ -35,9 +39,11 @@
       }
     },
     {
-      "taskName": "stack clean & build",
+      "label": "stack clean & build",
+      "command": "/bin/bash",
       "args": [
-        "echo START_STACK_CLEAN_AND_BUILD && cd ${workspaceRoot} && stack clean && stack build && echo END_STACK_CLEAN_AND_BUILD "
+        "-c",
+        "echo START_CLEAN_AND_BUILD && cd ${workspaceRoot} && ./project.sh clean && ./project.sh build && echo END_CLEAN_AND_BUILD "
       ],
       "problemMatcher": {
         "owner": "haskell",
@@ -55,17 +61,19 @@
       }
     },
     {
-      "isTestCommand": true,
-      "taskName": "stack test",
+      "group": "test",
+      "label": "stack test",
+      "command": "/bin/bash",
       "args": [
-        "echo START_STACK_TEST && cd ${workspaceRoot} && stack test && echo END_STACK_TEST "
+        "-c",
+        "echo START_TEST && cd ${workspaceRoot} && ./project.sh test && echo END_TEST "
       ],
       "problemMatcher": {
         "owner": "haskell",
         "fileLocation": [ "relative", "${workspaceRoot}" ],
         "pattern": [
           {
-            "regexp": "^.+?([^ ]+):(\\d+):.*$",
+            "regexp": "^\\s+(.+):(\\d+):.*$",
             "file": 1, "line": 2
           },
           {
@@ -77,9 +85,11 @@
     },
     {
       "isBackground": true,
-      "taskName": "stack watch",
+      "label": "stack watch",
+      "command": "/bin/bash",
       "args": [
-        "echo START_STACK_WATCH && cd ${workspaceRoot} && stack build --test --no-run-tests --file-watch && echo END_STACK_WATCH "
+        "-c",
+        "echo START_WATCH && cd ${workspaceRoot} && ./project.sh build --test --no-run-tests --file-watch && echo END_WATCH "
       ],
       "problemMatcher": {
         "owner": "haskell",
@@ -94,18 +104,20 @@
             "message": 1
           }
         ],
-        "watching": {
+        "background": {
           "activeOnStart": true,
           "beginsPattern": "^.*\\(local file changes:\\s",
           "endsPattern": "(ExitFailure|ExitSuccess)"
         }
       }
     },
-        {
+    {
       "isBackground": true,
-      "taskName": "stack watch & test",
+      "label": "stack watch & test",
+      "command": "/bin/bash",
       "args": [
-        "echo START_STACK_WATCH && cd ${workspaceRoot} && stack build --test --file-watch && echo END_STACK_WATCH "
+        "-c",
+        "echo START_WATCH && cd ${workspaceRoot} && ./project.sh build --test --file-watch && echo END_WATCH "
       ],
       "problemMatcher": {
         "owner": "haskell",
@@ -120,7 +132,7 @@
             "message": 1
           }
         ],
-        "watching": {
+        "background": {
           "activeOnStart": true,
           "beginsPattern": "^.*\\(local file changes:.*$",
           "endsPattern": "(ExitFailure|ExitSuccess)"
