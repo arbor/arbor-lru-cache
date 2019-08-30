@@ -8,17 +8,17 @@ orbs:
 workflows:
   multiple-ghc-build:
     jobs:
-      - haskell/build:
+      - haskell/build-with-binary-cache:
           name: GHC 8.2.2
           executor: haskell/ghc-8_2_2
           context: haskell-ci
 
-      - haskell/build:
+      - haskell/build-with-binary-cache:
           name: GHC 8.4.4
           executor: haskell/ghc-8_4_4
           context: haskell-ci
 
-      - haskell/build:
+      - haskell/build-with-binary-cache:
           name: GHC 8.6.4
           executor: haskell/ghc-8_6_4
           context: haskell-ci
