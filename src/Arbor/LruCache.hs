@@ -38,7 +38,9 @@ lookup k cache = do
     case M.lookup k es of
       Just tmv -> do
         registerForEviction k cache
-        return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
+        return $ STM.atomically $ do
+          registerForEviction k cache
+          STM.readTVar tmv >>= maybe STM.retry return
 
       Nothing -> do
         requestsInFlight <- STM.readTVar tRequestsInFlight
