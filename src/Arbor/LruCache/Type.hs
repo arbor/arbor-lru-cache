@@ -5,9 +5,10 @@ module Arbor.LruCache.Type where
 
 import GHC.Generics
 
+-- import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
 import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
 import qualified Control.Concurrent.STM                as STM
-import qualified Data.Map                              as M
+import qualified Data.Map.Strict                       as M
 
 data CacheConfig = CacheConfig
   { maxRequestsInFlight :: Int
@@ -18,7 +19,7 @@ data Cache k v = Cache
   { config           :: CacheConfig
   , requestsInFlight :: STM.TVar Int
   , entries          :: STM.TVar (M.Map k (STM.TVar (Maybe v)))
-  , evictionQueue    :: STM.TVar (PQ.PriorityQueue Int k)
+  , evictionQueue    :: STM.TVar (PQ.PQueue Int k)
   , evictionPriority :: STM.TVar Int
   , occupancy        :: STM.TVar Int
   , retrieve         :: k -> IO v

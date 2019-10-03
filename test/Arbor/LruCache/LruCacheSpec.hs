@@ -46,8 +46,8 @@ spec = describe "Arbor.LruCache.LruCacheSpec" $ do
 retrieve :: TVar [Event] -> Int -> IO String
 retrieve th mk = do
   let mv = show mk
-  atomically $ modifyTVar th (RetrieveEvent mk mv:)
+  atomically $ modifyTVar' th (RetrieveEvent mk mv:)
   return mv
 
 evict :: TVar [Event] -> Int -> String -> IO ()
-evict th mk mv = atomically $ modifyTVar th (EvictEvent mk mv:)
+evict th mk mv = atomically $ modifyTVar' th (EvictEvent mk mv:)
