@@ -21,10 +21,11 @@ import Data.Generics.Product.Any
 import Data.Maybe
 import Prelude                   hiding (lookup)
 
+-- import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
 import qualified Arbor.LruCache.Internal.PriorityQueue as PQ
 import qualified Arbor.LruCache.Type                   as Z
 import qualified Control.Concurrent.STM                as STM
-import qualified Data.Map                              as M
+import qualified Data.Map.Strict                       as M
 
 lookup :: Ord k => k -> Z.Cache k v -> IO v
 lookup k cache = do
@@ -41,9 +42,15 @@ lookup k cache = do
     case M.lookup k es of
       Just tmv -> do
         registerForEviction k cache
-        return $ STM.atomically $ do
-          registerForEviction k cache
-          STM.readTVar tmv >>= maybe STM.retry return
+        return $ STM.atomically $ STM.readTVar tmv >>= maybe STM.retry return
+        -- return $ do
+        --   (kvsForEviction, res) <- STM.atomically $ do
+        --     kvsForEviction <- takeEvictionsDue cache
+        --     res <- STM.readTVar tmv >>= maybe STM.retry return
+        --     return (kvsForEviction, res)
+        --   forM_ kvsForEviction $ uncurry evict
+
+        --   return res
 
       Nothing -> do
         requestsInFlight <- STM.readTVar tRequestsInFlight
@@ -57,14 +64,14 @@ lookup k cache = do
                 STM.atomically $ do
                   entries2 <- STM.readTVar tEntries
                   forM_ (M.lookup k entries2) $ \tv -> STM.writeTVar tv (throw e)
-                  STM.modifyTVar tRequestsInFlight pred
+                  STM.modifyTVar' tRequestsInFlight pred
                   STM.writeTVar tEntries (M.delete k entries2)
                 throw e
 
               kvsForEviction <- STM.atomically $ do
                 STM.writeTVar newTmv (Just v)
-                STM.modifyTVar tRequestsInFlight pred
-                STM.modifyTVar tOccupancy succ
+                STM.modifyTVar' tRequestsInFlight pred
+                STM.modifyTVar' tOccupancy succ
 
                 registerForEviction k cache
                 takeEvictionsDue cache
@@ -73,14 +80,15 @@ lookup k cache = do
 
               return v
 
+{-# NOINLINE registerForEviction #-}
 registerForEviction :: Eq k => k -> Z.Cache k v -> STM.STM ()
 registerForEviction k cache = do
   let tEvictionQueue    = cache ^. the @"evictionQueue"
   let tEvictionPriority = cache ^. the @"evictionPriority"
 
-  STM.modifyTVar tEvictionPriority (+1)
+  STM.modifyTVar' tEvictionPriority (+1)
   evictionPriority <- STM.readTVar tEvictionPriority
-  STM.modifyTVar tEvictionQueue (PQ.insert evictionPriority k)
+  STM.modifyTVar' tEvictionQueue (PQ.insert evictionPriority k)
 
 takeEvictionsDue :: Ord k => Z.Cache k v -> STM.STM [(k, v)]
 takeEvictionsDue cache = do
