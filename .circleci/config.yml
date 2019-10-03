@@ -19,8 +19,13 @@ workflows:
           context: haskell-ci
 
       - haskell/build-with-binary-cache:
-          name: GHC 8.6.4
-          executor: haskell/ghc-8_6_4
+          name: GHC 8.6.5
+          executor: haskell/ghc-8_6_5
+          context: haskell-ci
+
+      - haskell/build-with-binary-cache:
+          name: GHC 8.8.1
+          executor: haskell/ghc-8_8_1
           context: haskell-ci
 
       - github/release-cabal:
@@ -29,7 +34,7 @@ workflows:
           requires:
             - GHC 8.2.2
             - GHC 8.4.4
-            - GHC 8.6.4
+            - GHC 8.6.5
           checkout: true
           filters:
             branches:
