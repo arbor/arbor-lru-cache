@@ -12,6 +12,7 @@ category:           Data, Concurrency
 synopsis:           LRU cache based on STM
 license:            MIT
 license-file:       LICENSE
+tested-with:        GHC == 8.8.1, GHC == 8.6.5, GHC == 8.4.4, GHC == 8.2.2
 build-type:         Simple
 extra-source-files: README.md
                     ChangeLog.md
