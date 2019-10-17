@@ -1,7 +1,7 @@
 cabal-version: 2.4
 
 name:                   arbor-lru-cache
-version:                0.1.1.0
+version:                0.1.1.1
 description:            Please see the README on GitHub at <https://github.com/arbor/arbor-lru-cache#readme>
 homepage:               https://github.com/arbor/arbor-lru-cache#readme
 bug-reports:            https://github.com/arbor/arbor-lru-cache/issues
