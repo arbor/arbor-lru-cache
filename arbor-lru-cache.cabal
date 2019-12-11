@@ -20,6 +20,8 @@ extra-source-files:     README.md
 common base                 { build-depends: base                 >= 4.7        && < 5      }
 
 common containers           { build-depends: containers           >= 0.5        && < 0.7    }
+common doctest              { build-depends: doctest              >= 0.16.2     && < 0.17   }
+common doctest-discover     { build-depends: doctest-discover     >= 0.2        && < 0.3    }
 common hedgehog             { build-depends: hedgehog             >= 0.5        && < 1.1    }
 common hspec                { build-depends: hspec                >= 2.4        && < 2.8    }
 common hw-hspec-hedgehog    { build-depends: hw-hspec-hedgehog    >= 0.1        && < 0.2    }
@@ -45,7 +47,6 @@ library
                         Arbor.LruCache.Type
   hs-source-dirs:       src
 
-
 test-suite arbor-lru-cache-test
   import:               base, config
                       , arbor-lru-cache
@@ -61,3 +62,14 @@ test-suite arbor-lru-cache-test
                         Arbor.LruCache.LruCacheSpec
   hs-source-dirs:       test
   ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+
+test-suite doctest
+  import:               base, config
+                      , doctest
+                      , doctest-discover
+                      , arbor-lru-cache
+  type:                 exitcode-stdio-1.0
+  ghc-options:          -threaded
+  main-is:              DoctestDriver.hs
+  HS-Source-Dirs:       doctest
+  build-tool-depends:   doctest-discover:doctest-discover
