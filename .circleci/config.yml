@@ -33,6 +33,8 @@ workflows:
           name: GHC 8.8.1
           executor: haskell/ghc-8_8_1
           context: haskell-ci
+          cabal-build-extra: --write-ghc-environment-files=ghc8.4.4+
+          cabal-test-extra: --test-show-details=direct
 
       - github/release-cabal:
           name: GitHub Release
